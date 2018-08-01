@@ -1,0 +1,24 @@
+ui_print("******************************************");
+ui_print("     Treble Vendor+Boot Flashable ZIP     ");
+ui_print("     Made with MakeVendor by AryToNeX     ");
+ui_print("          Build date: {DD/MM/YY}          ");
+ui_print("******************************************");
+
+assert(getprop("ro.product.device") == "kate" || 
+       getprop("ro.build.product") == "kate" || 
+       getprop("ro.product.device") == "kenzo" || 
+       getprop("ro.build.product") == "kenzo" ||
+       abort("E3004: This package is for device: kate,kenzo; this device is " + getprop("ro.product.device") + ".");
+);
+
+show_progress(0.030000, 10);
+ui_print("Extracting vendor image...");
+block_image_update("/dev/block/bootdevice/by-name/cust", package_extract_file("vendor.transfer.list"), "vendor.new.dat.br", "vendor.patch.dat") ||
+  abort("E2001: Failed to update vendor image.");
+
+show_progress(0.600000, 10);
+ui_print("Extracting boot image...");
+package_extract_file("boot.img", "/dev/block/bootdevice/by-name/boot");
+
+ui_print("Done!");
+set_progress(1.000000);

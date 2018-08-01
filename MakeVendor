@@ -1,0 +1,83 @@
+#!/usr/bin/env php
+<?php
+
+const NEEDED_FILES = array(
+    "vendor.transfer.list",
+    "vendor.patch.dat",
+    "vendor.new.dat.br",
+    "boot.img",
+    "file_contexts.bin",
+    "system/build.prop",
+    "META-INF/com/android/metadata",
+    "META-INF/com/android/otacert",
+    "META-INF/com/google/android/update-binary",
+    "META-INF/com/google/android/updater-script"
+);
+
+const DIRS = array(
+    "system",
+    "META-INF/com/android",
+    "META-INF/com/google/android",
+    "META-INF/com/google",
+    "META-INF/com/",
+    "META-INF"
+);
+
+// CHECK OPTIONS
+$opts = getopt("i:o:");
+if (!isset($opts["i"]) || !isset($opts["o"])) die("You must specify input and output file dir!");
+
+// CHECK NEW UPDATER SCRIPT
+if (!is_file("new-updater-script")) die("New updater script is missing!");
+
+// OPEN INPUT ZIP
+$zip = new ZipArchive();
+$res = $zip->open($opts["i"]);
+if ($res !== true) die("Can't open input file: $res");
+unset($res);
+
+// CHECK MISSING FILES
+echo "Checking files..." . PHP_EOL;
+$missingFiles = array();
+foreach (NEEDED_FILES as $neededFile) {
+    if ($zip->locateName($neededFile) === false)
+        $missingFiles[] = $neededFile;
+}
+if (!empty($missingFiles)) {
+    echo "Unable to locate some important files:" . PHP_EOL;
+    foreach ($missingFiles as $missingFile) echo $missingFile . PHP_EOL;
+    exit(-1);
+}
+
+// EXTRACT THEM TO TEMP DIR
+echo "Extracting needed files..." . PHP_EOL;
+@mkdir("tmp");
+$zip->extractTo("tmp", NEEDED_FILES);
+$zip->close();
+unset($zip);
+
+// INJECT UPDATER SCRIPT
+echo "Injecting new updater-script..." . PHP_EOL;
+file_put_contents("tmp/META-INF/com/google/android/updater-script", str_replace("{DD/MM/YY}", date("d/m/Y"), file_get_contents("new-updater-script")));
+
+// CREATE NEW ZIP
+echo "Packing new zip..." . PHP_EOL;
+$newZip = new ZipArchive();
+$res = $newZip->open($opts["o"], ZipArchive::CREATE);
+if ($res !== true) die("Can't create output file: $res");
+unset($res);
+foreach (NEEDED_FILES as $neededFile) {
+    $newZip->addFile("tmp/" . $neededFile, $neededFile);
+    if ($newZip->status !== ZipArchive::ER_OK) die("Can't add files to new zip!");
+}
+$newZip->close();
+unset($newZip);
+
+// CLEAN UP
+echo "Cleaning up..." . PHP_EOL;
+foreach (NEEDED_FILES as $neededFile) unlink("tmp/" . $neededFile);
+foreach (DIRS as $dir) rmdir("tmp/" . $dir);
+rmdir("tmp");
+
+// DONE
+echo "Done!!! Vendor+boot flashable zip is at " . $opts["o"] . PHP_EOL;
