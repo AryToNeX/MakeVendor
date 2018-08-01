@@ -1,6 +1,8 @@
 ui_print("******************************************");
 ui_print("     Treble Vendor+Boot Flashable ZIP     ");
 ui_print("     Made with MakeVendor by AryToNeX     ");
+ui_print("           Grab the sources at:           ";
+ui_print("  https://github.com/AryToNeX/MakeVendor  ";
 ui_print("          Build date: {DD/MM/YY}          ");
 ui_print("******************************************");
 
