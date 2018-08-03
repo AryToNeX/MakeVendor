@@ -7,7 +7,6 @@ const NEEDED_FILES = array(
     "vendor.new.dat.br",
     "boot.img",
     "file_contexts.bin",
-    "system/build.prop",
     "META-INF/com/android/metadata",
     "META-INF/com/android/otacert",
     "META-INF/com/google/android/update-binary",
@@ -15,7 +14,6 @@ const NEEDED_FILES = array(
 );
 
 const DIRS = array(
-    "system",
     "META-INF/com/android",
     "META-INF/com/google/android",
     "META-INF/com/google",
